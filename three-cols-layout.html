@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>三列布局（两边宽度固定，中间自适应）</title>
+	<style>
+		.container {
+			overflow: hidden; /*该设置是为了让父容器的长度自适应最长的子元素*/
+		}
+		.border-group {
+			border: 1px solid #eee;
+		}
+		.team-inf {
+			float: left;
+			width: 200px;
+		}
+		.logo-group {
+			float: right;
+			width: 120px;
+			height: 420px;
+			padding: 0;
+		}
+		.team-intro {
+			margin: 0 140px 0 220px;
+		}
+
+		.container2 {
+			position: relative;
+			min-height: 420px;
+			background-color: lightblue;
+		}
+		.team-inf2 {
+			width: 200px;
+			position: absolute;
+			left: 0px;
+		}
+		.logo-group2 {
+			width: 120px;
+			height: 420px;
+			padding: 0;
+			position: absolute;
+			right: 0px;
+		}
+		.team-intro2 {
+			margin: 0 140px 0 220px;
+		}
+	</style>
+</head>
+<body>
+	<h3>有两种方法实现：float和position</h3>
+	<h4>1、float:首先一共四个div,一个父容器三个列，其中先书写左右两列，再书写中间一列，然后设定左右的宽度，并将左列左浮动，右列右浮动，对中间列设定maigin即可</h4>
+	<!-- 三栏书写的顺序很重要，margin值的设置是根据宽度来设定的，让中间的间隔都为20px -->
+	<div class="container">
+		<!-- 左边栏 -->
+		<div class="team-inf border-group">
+			<img src="../huodong/static/img/20170406_clock.png" class="team-logo">
+		</div>
+		<!-- 右边栏 -->
+		<div class="logo-group border-group">
+			<img src="../huodong/static/img/20170406_clock.png" class="personal-logo"/>
+		</div>
+		<!-- 中间自适应 -->
+		<div class="team-intro border-group">
+			........21
+		</div>
+	</div>
+
+	<h4>2、position：对父容器设置position:relative;对两边栏设定position:absolute;中间栏设定margin即可</h4>
+	<div class="container2">
+		<!-- 左边栏 -->
+		<div class="team-inf2 border-group">
+			<img src="../huodong/static/img/20170406_clock.png" class="team-logo">
+		</div>
+		<!-- 右边栏 -->
+		<div class="logo-group2 border-group">
+			<img src="../huodong/static/img/20170406_clock.png" class="personal-logo"/>
+		</div>
+		<!-- 中间自适应 -->
+		<div class="team-intro2 border-group">
+			........21
+		</div>
+	</div>
+</body>
+</html>
