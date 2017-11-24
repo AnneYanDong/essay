@@ -1,0 +1,86 @@
+<<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>DOM对象和JQuery对象的区别</title>
+</head>
+<body>
+	<ol>
+		<li>JQuery对象是一个数组对象，与DOM对象不同。它们是两种不同的对象，因此也具有不同的属性和方法。</li>
+		<li>JQuery对象是用JavaScript语言实现的一个类，它是通过JQuery包装DOM对象后产生的对象。如：
+			<pre>
+				;(function(window,undefined) {
+					window.$ = window.jQuery = jQuery;
+
+					//定义jQuery类
+					function jQuery(selector,content) {
+						content = content || document;
+						var eles = content.querySelectorAll(selector);
+						var len = eles.length;
+
+						//给jQuery对象添加长度属性
+						this.length = len;
+
+						//方便获取dom对象，获取实例： jQuery("#id")[0];
+						for(var i = 0; i < len; i++) {
+							this[i] = eles[i];
+						}
+
+						//扩展原型
+						jQuery.prototype = {
+							constructor: jQuery,
+							//根据索引获取dom对象
+							get: function(index) {
+								return this[index];
+							}
+						}
+					}
+				})(window);
+				//调用
+				var jqObj = new jQuery('.class');
+				因为jQuery的特殊处理，所以写jQuery代码的时候不需要new既可以。但是这里没有处理，所以加上new关键字
+			</pre>
+			JQuery对象是JQuery独有的对象，可以使用JQuery里的方法。
+			而DOM对象不属于JavaScript的一部分，
+		    它是各大浏览器对JavScript的扩展，但是各个浏览器在实现上又有一些不一致，
+	        导致javascript代码需要处理很多兼容性的问题。为了解决这些兼容性的问题，提高开发效率，JQuery库就诞生了。</li>
+		<li>JQuery对象不能使用DOM对象的属性和方法，因此如果你使用了JQuery库，那你在操作节点的时候，
+		    就要区分这个节点对象到底是DOM对象还是JQuery对象。</li>
+	</ol>
+	<h3>JQuery对象转DOM对象：</h3>
+	<ol>
+		<li>因为JQuery对象是一个数组对象，因此可以通过[index]来转化DOM对象</li>
+		<li>通过get(index)方法来转化DOM对象</li>
+	</ol>
+	<h3>DOM对象转JQuery对象：用$()把DOM对象包装起来就可以</h3>
+	<script>
+		;(function(window,undefined) {
+			window.$ = window.jQuery = jQuery;
+
+			//定义jQuery类
+			function jQuery(selector,content) {
+				content = content || document;
+				var eles = content.querySelectorAll(selector);
+				var len = eles.length;
+
+				//给jQuery对象添加长度属性
+				this.length = len;
+
+				//方便获取dom对象，获取实例： jQuery("#id")[0];
+				for(var i = 0; i < len; i++) {
+					this[i] = eles[i];
+				}
+
+				//扩展原型
+				jQuery.prototype = {
+					constructor: jQuery,
+					//根据索引获取dom对象
+					get: function(index) {
+						return this[index];
+					}
+				}
+			}
+		})(window);
+	</script>
+</body>
+</html>
