@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>第六章 面向对象编程之属性内部构造原理</title>
+</head>
+<body>
+<pre>
+<h3>属性类型：数据属性和访问器属性。</h3>
+<p>
+ECMA-262中在定义<b>内部</b>才用的<b>特性</b>时，描述了其属性的各种特征。
+ECMA-262定义这些特性是为了实现JavaScript引擎使用的，因此在JavaScript中不能直接使用。
+为了表示<b>该特性是内部值</b>，该规范把这些特性放在两对儿方括号中。
+</p>
+<h4>1、数据属性</h4>
+<p>
+数据属性中包含一个<b>数据值</b>的位置[[Value]],在这个位置可以读取和写入值。
+数据<b>属性</b>有4个描述其行为的<b>特性</b>：
+<ul>
+	<li>
+	1、[[Configurable]]:表示能否通过delete删除属性并重新定义属性；
+				或能否修改<b>属性的特性</b>；
+				或能否把<b>数据属性</b>修改为<b>访问器属性</b>；
+	</li>
+	<li>
+	2、[[Enumerable]]:表示能否通过for-in循环返回属性；
+	</li>
+	<li>
+	3、[[Writable]]:表示能否修改属性的值；
+	</li>
+	<li>
+	4、[[Value]]:包含这个数据属性的值。
+			读取属性值的时候，从这个位置读；
+			写入属性值的时候，把新值保存在这个位置；
+			这个特性的默认值为undefined;
+	</li>
+</ul>
+<p>
+var person = {
+	name: "Nick";
+}
+向上面这种定义对象的方式，其name属性叫数据属性，
+其特性[[Configurable]]、[[Enumerable]]、[[Writable]]的默认值为true;
+其[[Value]]特性的值将被设置为"Nick"，而对这个值的任何修改都将反映在这个位置上;
+</p>
+</p>
+<p>
+要修改属性默认的特性值，必须使用ECMAScript5中的Object.defineProperty()方法；
+这个方法接收三个参数：属性所在的对象、属性的名字、描述符对象；
+其中描述符对象的属性必须是：configurable、enumerable、writable、value;
+设置其中的一到多个值，可以修改对应的特性值；比如：
+var person = {};
+Object.defineProperty(person,"name",{
+	writable: false,
+	value: "Nick"
+});
+console.log(person.name); //"Nick"
+person.name = "Greg";
+console.log(person.name); //"Nick"
+上面定义了person对象的name属性，描述该数据属性的特性有：
+writable:false,表示不可写，即不能修改数据属性的值；
+value:"Nick",表示该数据属性name的值为Nick;
+所以，即使后面修改name属性的值也是不成功的(非严格模式下)，因为writable特性的值为false;
+严格模式下赋值操作会报错。
+
+再比如：
+var person = {};
+Object.defineProperty(person,"name",{
+	configurable: false,
+	value: "Nick"
+});
+console.log(person.name); //"Nick"
+delete person.name;
+console.log(person.name); //"Nick"
+上面定义了person对象以及其数据属性name,描述该数据属性的特性有：
+configurable: false表示不可配置，也就是不能用delete删除数据属性；
+非严格模式下delete person.name操作什么也不会发生；
+严格模式下会报错。
+<b>一旦把属性变为不可配置的，就不能再把该属性变为可配置的了。</b>
+此时，用Object.defineProperty()方法修改特性，都会报错。
+设置了configurable=false之后，其他特性的值只能修改为false
+或者说js引擎已经把其他特性修改成了false,
+所以，如果你企图用Object.defineProperty()修改其他任何特性的值为true的话，都会报错。
+cannot redefine property
+
+<b>另外，在调用defineProperty()方法时，如果不指定特性的值，
+configurable,enumerable,writable的值默认都为false</b>
+
+<b>IE8是第一个实现Object.defineProperty()方法的浏览器。
+但是存在很多限制，只能在DOM对象上使用这个方法，而且只能创建访问器属性；
+由于实现不彻底，建议读者不要在IE8中使用Object.defineProperty()</b>
+</p>
+</pre>
+
+<h4>2、访问器属性</h4>
+<pre>
+<p>
+访问器属性中包含一对儿getter和setter函数（不过这两个函数不是必须的）；
+当读取访问器属性时，会调用getter函数，这个函数负责返回有效的值；
+当写入访问器属性时，会调用setter函数并传入新值，这个函数负责如何处理数据。
+访问器属性也有四个特性：
+<ul>
+	<li>1、[[Configurable]]:表示能否用delete删除访问器属性；
+		或能否修改访问器属性的特性；
+		或能否将访问器属性修改为数据属性；
+	</li>
+	<li>2、[[Enumerale]]:表示能否用for-in循环返回访问器属性的值；
+	</li>
+	<li>3、[[Get]]:读取访问器属性时调用的函数，默认为undefined</li>
+	<li>4、[[Set]]:写入访问器属性时调用的函数，默认为undefined</li>
+</ul>
+访问器属性不能直接定义，必须使用Object.defineProperty()来定义；
+var book = {
+	_year: 2004,
+	edition: 1
+}
+Object.defineProperty(book,"year",{
+	get: function(){
+		return this._year;
+	},
+	set: function(newValue){
+		if(newValue > 2004){
+			this._year = newValue;
+			this.edition += newValue - 2004;
+		}
+	}
+});
+book.year = 2005;
+console.log(book.edition); //2
+上面创建了一个book对象，并定义了两个数据属性_year,edition和一个访问器属性year;
+访问器属性year,get函数返回数据属性_year的值；所以访问器属性year的默认值是2004;
+set函数通过传入访问器属性year的新值，来修改数据属性edition的值;
+
+这是使用访问器属性比较常见的用法，即修改一个属性的值会导致其他属性的值发生改变。
+
+不一定非要同时定义getter和setter函数；
+只定义getter函数，表示只能读不能写；尝试写入值，在非严格模式下会被忽略；严格模式下会报错；
+之定义setter函数，表示只能写不能读；尝试读取值，在非严格模式下会返回undefined;严格模式报错；
+
+支持ECMAScript5的Object.defineProperty()方法的浏览器有IE9+,Firefox4+,Safari5+,Opera12+以及chrome;
+在Object.defineProperty()方法之前，要创建访问器属性，一般都是用对象中两个非标准的方法：
+_defineGetter_()和_defineSetter_();这两个方法最初是由firefox引入的，后来chrome1，Safari3以及Opera9.5
+也给出了相同的实现。使用者两个遗留的方法，可以重写前面的例子：
+var book = {
+	_year : 2004,
+	edition: 1
+}
+book._defineGetter_("year",function(){
+	return this._year;
+});
+book._defineSetter_("year",function(newValue){
+	if(newValue > 2004){
+		this._year = newValue;
+		this.edition += newValue - 2004;
+	}
+});
+book.year = 2005;
+console.log(book.edition);
+
+在不支持Object.defineProperty()方法的浏览器中，不能修改[[Configurable]]和[[Enumerable]]
+</p>
+<p>
+ECMAScript5又定义了一个Object.defineProperties()方法来为同一对象定义多个属性。
+支持Object.defineProperties()方法的浏览器有IE9+,Firefox4+,Safari5+,Opera12+以及chrome；
+Object.defineProperties(book,{
+	_year: {
+		value: 2004
+	},
+	edition: {
+		value: 1
+	},
+	year: {
+		get: function(){
+			return this._year;
+		},
+		set: function(newValue){
+			if(newValue > 2004){
+				this._year = newValue;
+				this.edition += newValue - 2004;
+			}
+		}
+	}
+});
+以上代码同时定义了book对象的_year和edition两个数据属性，以及year一个访问器属性。
+返回的对象与上面定义的对象是一样的。
+</p>
+</pre>
+
+<h3>3、读取属性的特性</h3>
+<pre>
+<p>
+ECMAScript5中定义了Object.getOwnPropertyDescriptor()方法来读取某个对象属性的特性，
+该方法有两个参数：要读取属性所在的对象以及要读取的属性名。
+返回描述符对象。
+比如，上面的book对象，我要读取book对象的_year属性的特性。
+var descriptor = Object.getOwnPropertyDescriptor(book,"_year");
+console.log(descriptor.value); //2004
+如果是数据属性，该方法返回的对象的属性包括：configurable,enumerable,writable,value
+如果是访问器属性，该方法返回的对象属性包括：configurable,enumerable,get,set
+
+支持Object.getOwnPropertyDescriptor()方法的浏览器有IE9+,Firefox4+,Safari5+,Opera12+以及chrome；
+</p>
+<p>
+小结：以上介绍了数据属性和访问器属性的定义，以及描述这两个属性的特性，并如果取得这些特性。
+三个方法：Object.defineProperty()、Object.defineProperties()、Object.getOwnPropertyDescriptor()
+</p>
+</pre>
+</body>
+</html>
