@@ -43,10 +43,10 @@ var businessLineIdText = getSelectId("businessLineIdText");
 var ticketTypeText = getSelectId("ticketTypeText");
 //这里之前用name,造成了下面设置nameItem的时候的命名冲突，因未访问name.options的时候，name先访问的是nameItem里面的name属性
 var seName = getSelectId("name");
-
+var myData = null; //这个全局变量用来存储处理后的数据
 Ajax('get','http://127.0.0.1:8888/',null,function (data){
 	console.log(data);
-	var myData = prepareData(data);
+	myData = prepareData(data);
 	//数据改变之后做出的处理
 	notifyDataChange(myData);
 
