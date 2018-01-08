@@ -1,0 +1,192 @@
+<html>
+
+<head>
+</head>
+
+<body>
+
+  <select id="businessLine">
+
+  </select>
+
+  <select id="ticketType">
+
+  </select>
+
+  <select id="name">
+
+  </select>
+
+</body>
+
+<script>
+  // var data = [{
+  //   "ticketId": 1,
+  //   "businessLineIdText": "金融",
+  //   "businessLineId": 3,
+  //   "ticketTypeText": "抵费券",
+  //   "ticketType": 1,
+  //   "name": "15元"
+  // },
+  // {
+  //   "ticketId": 2,
+  //   "businessLineIdText": "金融",
+  //   "businessLineId": 3,
+  //   "ticketTypeText": "免息券",
+  //   "ticketType": 2,
+  //   "name": "三期免息"
+  // },
+  // {
+  //   "ticketId": 3,
+  //   "businessLineIdText": "金融",
+  //   "businessLineId": 3,
+  //   "ticketTypeText": "抵费券",
+  //   "ticketType": 1,
+  //   "name": "金融抵费券"
+  // },
+  // {
+  //   "ticketId": 4,
+  //   "businessLineIdText": "理财",
+  //   "businessLineId": 2,
+  //   "ticketTypeText": "收益金",
+  //   "ticketType": 201,
+  //   "name": "理财金名称"
+  // },
+  // {
+  //   "ticketId": 5,
+  //   "businessLineIdText": "管家",
+  //   "businessLineId": 1,
+  //   "ticketTypeText": "还款金",
+  //   "ticketType": 104,
+  //   "name": "还款金名称-丁明梦"
+  // }];
+
+  //使用node.js服务器返回该数据
+  //1、先在客户端发送AJAX请求
+  function createXMLHttpRequest(){
+    var xhr;
+    if (window.XMLHttpRequest) {
+      xhr = new XMLHttpRequest();
+    } else if (window.ActiveXObject) {
+      xhr = new ActiveXObject("Microsoft.XMLHTTP");
+    } else {
+      console.log("您的浏览器不支持AJAX请求！");
+    }
+    return xhr;
+  }
+  var xhr = createXMLHttpRequest(); //创建XMLHttpRequest对象
+  //打开服务器上的文件地址，与服务器建立联系。get请求如果有要发送的数据就写在URL的后面
+  xhr.open("get","http://127.0.0.1:8888/",true);
+  //向服务器发送请求，如果是POST请求，在发送到服务器之前要设置请求头；如果有要发送的数据，就写在send()方法里面
+  xhr.send();
+
+  //这里处理请求成功,数据返回后的事情
+  xhr.onreadystatechange = function(){
+    if (xhr.readyState == 4 && xhr.status == 200) {
+      console.log(xhr.responseText);
+      data = JSON.parse(xhr.responseText);
+      console.log("data->",data);
+      prepareData();
+      initViews();
+    }
+  }
+
+
+  var dataMap = {}
+
+  function prepareData() {
+    for (var ticket of data) {
+      var businessLineText = ticket.businessLineIdText;
+      var ticketTypeText = ticket.ticketTypeText;
+
+      if (!dataMap[businessLineText]) {
+        dataMap[businessLineText] = {};
+      }
+
+      if (!dataMap[businessLineText][ticketTypeText]) {
+        dataMap[businessLineText][ticketTypeText] = [];
+      }
+
+      dataMap[businessLineText][ticketTypeText].push(ticket);
+    }
+  }
+
+  function getBusinessLineTexts() {
+    var texts = []
+    for (text in dataMap) {
+        texts.push(text)
+    }
+    return texts;
+  }
+
+  function getTicketTypeTexts() {
+
+    var selectedBusinessLine = getSelectedValueOfSelectId("businessLine")
+
+    var texts = []
+    for (text in dataMap[selectedBusinessLine]) {
+        texts.push(text)
+    }
+    return texts;
+  }
+
+  function getTickets() {
+
+    var selectedBusinessLine = getSelectedValueOfSelectId("businessLine")
+    var selectedticketType = getSelectedValueOfSelectId("ticketType")
+
+    var tickets = []
+
+    var typesTickets = dataMap[selectedBusinessLine][selectedticketType]
+    for (ticket in typesTickets) {
+        tickets.push(typesTickets[ticket])
+    }
+    return tickets;
+  }
+
+  function getSelectedValueOfSelectId(selectId) {
+    var select = document.getElementById(selectId);
+    var value = select.options[select.selectedIndex].value
+    return value
+  }
+
+  function initViews() {
+
+    var businessLine = document.getElementById("businessLine");
+    var ticketType = document.getElementById("ticketType");
+    var name = document.getElementById("name");
+
+    for (text of getBusinessLineTexts()) {
+        businessLine.options.add(new Option(text, text))
+    }
+
+    businessLine.onchange = function() {
+      ticketType.options.length=0;
+      for (text of getTicketTypeTexts()) {
+          ticketType.options.add(new Option(text, text))
+      }
+      // 手动触发
+      ticketType.onchange()
+    }
+
+    ticketType.onchange = function() {
+        name.options.length=0;
+        for (ticket of getTickets()) {
+            console.log(ticket);
+            name.options.add(new Option(ticket.name,ticket.ticketId))
+        } 
+        name.onchange();
+    }
+
+    name.onchange = function() {
+      console.log(getSelectedValueOfSelectId("name"));
+      console.log(name.options[name.selectedIndex].text);
+    }
+
+    // 首次需要手动触发
+    businessLine.onchange()
+  }
+
+</script>
+
+</html>

@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>XML</title>
+</head>
+<body>
+	<p><b>将XML转化为DOM结构：</b>
+	首先创建一个DOMParser类的实例（var domparser = new DOMParser();）然后再调用parseFromString("root","text/xml")方法转化为DOM，接下来就可以使用DOM的操作方法了。
+	</p>
+	<p>在转化过程中可能会出现错误，出现错误时，DOMParser实例调用的parseFromString()方法会返回parsererror文档元素，此时可以使用try-catch来捕捉。</p>
+	<pre>
+		var domparser = new DOMParser(),
+			xmldom,
+			errors;
+		try {
+			xmldom = domparser.parseFromString("<root><child/></root>","text/xml");
+			errors = xmldom.getElementsByTagName("parsererror");
+			if (errors.length > 0) {
+				throw new Error("Parsing error!");
+			}
+		}catch(ex) {
+			alert("parsing error!");
+		}
+	</pre>
+	<p><b>将DOM转化为XML结构：</b>
+		首先创建一个XMLSerializer类的实例（var serializer = new XMLSerializer();）,然后调用serializeToString("DOM结构")方法
+	<pre>
+		var serializer = new XMLSerializer();
+		var xml = serializer.serializeToString(document);
+		alert(xml);
+	</pre>
+	</p>
+	<h3>上面的DOMParser类以及实例的方法parseFromString()、XMLSerializer类以及实例的serializeToString()方法都只兼容IE9+,chrome,firfox,safari,opera</h3>
+	<p>IE8及之前版本的XML：其实IE是最先原生支持XML的浏览器，只是它是通过ActiveXObject对象来实现的，该对象需要传入一个表示XML文档版本的字符串参数，这个参数有六种，表示6种不同的XML文档版本。但是常用的就只有三种：MSXML2.DOMDocument.6.0、MSXML2.DOMDocument.3.0、MSXML2.DOMDocument。</p>
+	<p>通过尝试创建每个版本的实例并观察是否有错误发生，可以确定哪个版本可以使用。</p>
+	<pre>
+		//创建不同版本XML文档对象
+		function createDocument() {
+			//ActiveX控件为预防安全问题，不允许使用this对象
+			if (typeof arguments.callee.activeXString != "string") {
+				var versions = ["MSXML2.DOMDocument.6.0","MSXML2.DOMDocument.3.0","MSXML2.DOMDocument"],
+					i,
+					len = versions.length;
+				for(i = 0; i < len; i++) {
+					try {
+						new ActiveXObject(versions[i]);
+						arguments.callee.activeXString = verdions[i]; //添加activeXString这个属性来存储XML版本
+						break;
+					} catch(ex) {
+						//跳过
+					}
+				}
+			}
+			return new ActiveXObject(arguments.callee.activeXString);
+		}
+	</pre>
+	<p>要解析XML字符串，首先就是要创建一个DOM文档createDocument(),然后调用loadXML(“传入xml字符串”)方法,最后就可以像操作DOM一样去解析这个XML文档了</p>
+	<p>IE序列化XML非常简单，IE中每个DOM节点都有一个xml属性，其中保存着该节点的XML字符串</p>
+	<p>IE中的XML文档对象也可以加载来自服务器的文件：</p>
+	<pre>
+		<!-- 同步下载xml文件并处理 -->
+		var xmldom = createDocument(); //创建XML文档对象
+		xmldom.async = false; //设置加载的方式，这里是同步加载
+		xmldom.load("example.xml"); //使用load方法下载要加载的XML文件的URL
+		if (xmldom.parseError != 0) {
+			//处理错误
+		} else {
+			console.log(xmldom.documentElement.tagName); //"root"
+			console.log(xmldom.documentElement.firstChild.tagName); //"child"
+
+			var anotherChild = xmldom.createElement("child");
+			xmldom.documentElement.appendChild(anotherChild);
+
+			var children = xmldom.getElementsByTagName("child");
+			console.log(children.length);
+
+			console.log(xmldom.xml); //IE序列化
+		}
+	</pre>
+	<pre>
+		//异步
+		var xmldom = createDocument();
+		xmldom.async = true; //异步
+		xmldom.onreadystatechange = function() {
+			if (xmldom.readyState == 4) {
+				if (xmldom.parseError != 0) {
+					//处理错误
+				} else {
+					console.log(xmldom.documentElement.tagName); //"root"
+					console.log(xmldom.documentElement.firstChild.tagName); //"child"
+
+					var anotherChild = xmldom.createElement("child");
+					xmldom.documentElement.appendChild(anotherChild);
+
+					var children = xmldom.getElementsByTagName("child");
+					console.log(children.length);
+
+					console.log(xmldom.xml); //IE序列化
+				}
+			}
+		}
+		xmldom.load("example.xml");
+	</pre>
+	<p>虽然可以使用XML DOM文档对象加载xml文件，但公认的还是使用XMLHttpRequest对象比较好。</p>
+
+	<h3>跨浏览器处理XML</h3>
+	<p>结合上述介绍的IE8及以下版本的xml处理以及其他主流浏览器的处理，兼容性处理如下：</p>
+	<pre>
+		//解析XML兼容
+		function parseXML(xml) {
+			var xmldom = null;
+			if (typeof DOMParser != "undefined") {
+				//说明是主流浏览器
+				xmldom = (new DOMParser()).parseFromString(xml,"text/xml"); //解析XML字符串
+				//处理转化出现错误的情况
+				var errors = xmldom.getElementsByTagName("parsererror");
+				if (errors.length) {
+					throw new Error("XML Parsing Error:" + errors[0].textContent);
+				}
+			} else if(typeof ActiveXObject != "undefined"){
+				//IE8及以下版本
+				xmldom = createDocument();
+				xmldom.loadXML(xml); //解析XML字符串
+				//处理转化出现错误的情况
+				if (xmldom.parseError != 0) {
+					throw new Error("XML Parsing Error:" + xmldom.parseError.reason);
+				}
+			} else {
+				throw new Error("NO XML Parser available!");
+			}
+			return xmldom;
+		}
+	</pre>
+	<p>在使用这个函数解析XML字符串时，应使用try-catch语句来捕捉错误，以防发生错误。</p>
+
+	<p>序列化XML兼容</p>
+	<pre>
+		//序列化XML兼容
+		function serializeXML(xml) {
+			if (typeof XMLSerializer != "undefined") {
+				return (new XMLSerializer()).serializeToString(xml);
+			} else if (typeof xmldom.xml != "undefined") {
+				return xmldom.xml;
+			} else {
+				throw mew Error("Could not Serialize XML DOM");>
+
+			}
+		}
+	</pre	<h3>浏览器对XPath的支持</h3>
+	<script>
+		var domparser = new DOMParser(),
+			xmldom,
+			errors;
+		try {
+			xmldom = domparser.parseFromString("<root><child/></root>","text/xml");
+			errors = xmldom.getElementsByTagName("parsererror");
+			if (errors.length > 0) {
+				throw new Error("Parsing error!");
+			} else {
+				console.log("XML结构转化的DOM结构:\n",xmldom);
+			}
+		}catch(ex) {
+			alert("parsing error!");
+		}
+		var serializer = new XMLSerializer();
+		var xml = serializer.serializeToString(document);
+		console.log("DOM结构（html文档）转化的XML结构:\n",xml);
+
+		//利用不同版本的ActiveXObject创建XML文档对象
+		function createDocument() {
+			if (typeof arguments.callee.activeXString != "string") {
+				var versions = ["MSXML2.DOMDocument.6.0","MSXML2.DOMDocument.3.0","MSXML2.DOMDocument"],
+					i,
+					len = versions.length;
+				for(i = 0; i < len; i++) {
+					try {
+						new ActiveXObject(versions[i]);
+						arguments.callee.activeXString = verdions[i];
+						break;
+					} catch(ex) {
+						//跳过
+					}
+				}
+			}
+			return new ActiveXObject(arguments.callee.activeXString);
+		}
+		var xmldom = createDocument(); //创建DOM文档
+		xmldom.loadXML("<root><child/></root>"); //调用loadXML()方法
+		console.log("xml的根元素的标签名：",xmldom.documentElement.tagName);
+
+		var xmldom = createDocument(); //创建XML文档对象
+		xmldom.async = false; //设置加载的方式，这里是同步加载
+		xmldom.load("example.xml"); //使用load方法下载要加载的XML文件的URL
+		if (xmldom.parseError != 0) {
+			//处理错误
+		} else {
+			console.log(xmldom.documentElement.tagName); //"root"
+			console.log(xmldom.documentElement.firstChild.tagName); //"child"
+
+			var anotherChild = xmldom.createElement("child");
+			xmldom.documentElement.appendChild(anotherChild);
+
+			var children = xmldom.getElementsByTagName("child");
+			console.log(children.length);
+
+			console.log(xmldom.xml); //IE序列化
+		}
+
+		//异步
+		var xmldom = createDocument();
+		xmldom.async = true; //异步
+		xmldom.onreadystatechange = function() {
+			if (xmldom.readyState == 4) {
+				if (xmldom.parseError != 0) {
+					//处理错误
+				} else {
+					console.log(xmldom.documentElement.tagName); //"root"
+					console.log(xmldom.documentElement.firstChild.tagName); //"child"
+
+					var anotherChild = xmldom.createElement("child");
+					xmldom.documentElement.appendChild(anotherChild);
+
+					var children = xmldom.getElementsByTagName("child");
+					console.log(children.length);
+
+					console.log(xmldom.xml); //IE序列化
+				}
+			}
+		}
+		xmldom.load("example.xml");
+
+		//解析XML兼容
+		function parseXML(xml) {
+			var xmldom = null;
+			if (typeof DOMParser != "undefined") {
+				//说明是主流浏览器
+				xmldom = (new DOMParser()).parseFromString(xml,"text/xml"); //解析XML字符串
+				//处理转化出现错误的情况
+				var errors = xmldom.getElementsByTagName("parsererror");
+				if (errors.length) {
+					throw new Error("XML Parsing Error:" + errors[0].textContent);
+				}
+			} else if(typeof ActiveXObject != "undefined"){
+				//IE8及以下版本
+				xmldom = createDocument();
+				xmldom.loadXML(xml); //解析XML字符串
+				//处理转化出现错误的情况
+				if (xmldom.parseError != 0) {
+					throw new Error("XML Parsing Error:" + xmldom.parseError.reason);
+				}
+			} else {
+				throw new Error("NO XML Parser available!");
+			}
+			return xmldom;
+		}
+		//使用上述兼容方法
+		var xmldom = null;
+		try {
+			xmldom = parseXML("<root></child></root>");
+		} catch(ex) {
+			console.log(ex.message);
+		}
+
+		//序列化XML兼容
+		function serializeXML(xml) {
+			if (typeof XMLSerializer != "undefined") {
+				return (new XMLSerializer()).serializeToString(xml);
+			} else if (typeof xmldom.xml != "undefined") {
+				return xmldom.xml;
+			} else {
+				throw mew Error("Could not Serialize XML DOM");
+			}
+		}
+	</script>
+
+</body>
+</html>

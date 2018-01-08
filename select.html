@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Select选择</title>
+</head>
+<body>
+	<select class="businessLineIdText" id="businessLineIdText">
+		<!-- <option value=""></option> -->
+	</select>
+	<select class="ticketTypeText" id="ticketTypeText">
+		<!-- <option value=""></option> -->
+	</select>
+	<select class="name" id="name">
+		<!-- <option value=""></option> -->
+	</select>
+	<p>根据当前的选择，显示ticketId和name</p>
+	<input type="text" id="ticketId">
+	<input type="text" id="ticketName">
+<script>
+	window.onload = function (argument) {
+		var data = [{
+	    "ticketId": 1,
+	    "businessLineIdText": "金融",
+	    "businessLineId": 3,
+	    "ticketTypeText": "抵费券",
+	    "ticketType": 1,
+	    "name": "15元"
+	  },
+	  {
+	    "ticketId": 2,
+	    "businessLineIdText": "金融",
+	    "businessLineId": 3,
+	    "ticketTypeText": "免息券",
+	    "ticketType": 2,
+	    "name": "三期免息"
+	  },
+	  {
+	    "ticketId": 3,
+	    "businessLineIdText": "金融",
+	    "businessLineId": 3,
+	    "ticketTypeText": "抵费券",
+	    "ticketType": 1,
+	    "name": "金融抵费券"
+	  },
+	  {
+	    "ticketId": 4,
+	    "businessLineIdText": "理财",
+	    "businessLineId": 2,
+	    "ticketTypeText": "收益金",
+	    "ticketType": 201,
+	    "name": "理财金名称"
+	  },
+	  {
+	    "ticketId": 5,
+	    "businessLineIdText": "管家",
+	    "businessLineId": 1,
+	    "ticketTypeText": "还款金",
+	    "ticketType": 104,
+	    "name": "还款金名称-丁明梦"
+	  }];
+		
+		var select1 = document.getElementsByClassName('businessLineIdText')[0];
+		var select2 = document.getElementsByClassName('ticketTypeText')[0];
+		var select3 = document.getElementsByClassName('name')[0];
+		var ticketName = document.getElementById('ticketName');
+
+		// var index = select1.options.selectedIndex; //选中项的index
+		//数据businessLineIdText去重,得到businessLineIdText属性的数组
+		var hash = {};
+		var interfaceObject = data.reduce(function(item, next) {
+		    hash[next.businessLineIdText] ? '' : hash[next.businessLineIdText] = true && item.push(next);
+		    return item
+		}, []);
+		var len = interfaceObject.length;
+		select1.onchange = function () {
+			var ticketTypeTexts = [];
+			select2.options.length = 0;
+			//然后，得到相同businessLineIdText下的tickeTypeText
+			for (var i = 0; i < data.length; i++) {
+				if(data[i].businessLineIdText == interfaceObject[select1.selectedIndex].businessLineIdText){
+					ticketTypeTexts.push(data[i].ticketTypeText);
+				}
+			}
+			//对ticketTypeTexts去重
+			var newTicketObject = {};
+			newTicketTypeTexts = ticketTypeTexts.reduce(function(pre, next) {
+			    if (!newTicketObject[next]) {
+			    	pre.push(next);
+			    	newTicketObject[next] = true;
+			    }
+			    return pre;
+			}, []);
+			//去重后加到select2
+			for (var i = 0; i < newTicketTypeTexts.length; i++) {
+				select2.options.add(new Option(newTicketTypeTexts[i]));
+			}
+			//select1自动触发后，还要手动触发select2的值
+			select2.onchange();
+		}
+		select2.onchange = function() {
+			var name = [];
+			console.log(newTicketTypeTexts);
+			select3.options.length = 0;
+			//然后，得到相同ticketTypeText下的name
+			for (var i = 0; i < data.length; i++) {
+				if(data[i].ticketTypeText == newTicketTypeTexts[select2.selectedIndex]){
+					name.push(data[i].name);
+				}
+			}
+			// console.log(name);
+			for (var i = 0; i < name.length; i++) {
+				select3.options.add(new Option(name[i]));
+			}
+			//select2自动触发后，还要手动触发select3的值
+			select3.onchange();
+			// console.log(name[select3.selectedIndex]);
+		}
+		select3.onchange = function() {
+			ticketName.value = select3.options[select3.selectedIndex].value;
+			console.log(select3.options[select3.selectedIndex].value);
+		}
+		//首先添加select1的值
+		for (var i = 0; i < len; i++) {
+			select1.options.add(new Option(interfaceObject[i].businessLineIdText));
+		}
+
+		select1.onchange();
+	}
+</script>
+</body>
+</html>
