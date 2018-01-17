@@ -29,12 +29,11 @@ ECMAScript中描述了原型链的概念，并将原型链作为实现继承的�
 
 当我们把构造函数的prototype属性指向其他构造函数的实例时；
 也就是让原型对象等于另一个类型的实例；
-原型链形成的过程如下图：
-https://github.com/AnneYanDong/images/commit/bc1feab50c95a085977c1a780c7f3a0d8b16ef3b
+<a href="https://github.com/AnneYanDong/images/commit/bc1feab50c95a085977c1a780c7f3a0d8b16ef3b">原型链形成的过程图解</a>
 
 原型链的基本模式代码如下：
 function SuperType(){
-	this.property = true;
+	this.property = true; //定义实例的属性
 }
 SuperType.prototype.getSuperValue = function(){
 	return this.property;
@@ -52,11 +51,148 @@ SubType.prototype.getSubValue = function() {
 
 var instance = new SubType();
 console.log(instance.getSuperValue()); //true
-原型链图如下：
+<a href="https://github.com/AnneYanDong/images/commit/5acecfe903b8531a1887526aed4c8f3d6c6f5f75">原型链继承图解</a>
 
+上图中，subType的prototype指向了superType的实例，也就是说superType的实例赋给了subType的原型;
+表现的代码为subType.prototype = new SuperType(); 
+那就是说subType的原型现在是superType的一个实例，
+而实例的内部包含一个[[Prototype]]指针，指向原型对象；
+原型对象将自动获取一个constructor属性，指向prototype所在的函数。
+而对于property为什么在subType中，这是因为property是实例属性；
+而subType.prototype现在是superType的实例，
+所以superType的property属性的值会体现在subType.prototype中。
+同理，可以得出superType继承了Object。
+
+通过实现原型链，本质上扩展了前面所说的原型搜索机制。
+当以读取模式读取某一个实例属性时，首先会在该实例的内部查找，
+如果没有，就沿着原型链逐级向上搜素。
+
+不要忘记默认的Object原型。
+
+确定原型与实例的关系有两种：
+1、某个实例是否是某个原型的实例，instanceof操作符
+2、某个原型是否是某个实例的原型，isPrototypeOf()方法
+
+在重写原型中的方法或定义原型中的方法时，代码一定要放在重写原型语句的后面。
+在通过原型链实现继承时，不能使用对象字面量的方式创建原型方法，
+因为这样会重写原型从而使继承无效。（无法访问超类中的方法）
+
+<h3>原型链的问题一：主要是引用类型的属性所带来的问题</h3>
+前面说到，当用原型链实现继承时，subType.prototype实际上是superType的实例，
+那假如在superType中定义一个引用类型的实例colors，
+那么这个引用类型colors就会被subType.prototype继承；
+那么体现为subType.prototype.colors; //这里就是问题
+当你修改了subType的一个实例的colors的值的时候，你再重新创建另一个实例，
+那么另一个实例上的colors值就会是被修改后的colors值
+
+function superType() {
+	this.colors = ["red","blue","green"];
+}
+function subType() {
+}
+
+subType.prototype = new superType(); //继承，不能向超类的构造函数中传递参数
+var instance1 = new subType();
+console.log(instance1.colors); //["red", "blue", "green"]
+instance1.colors.push("black");
+console.log(instance1.colors); //["red", "blue", "green", "black"]
+
+var instance2 = new subType();
+console.log(instance2.colors); //["red", "blue", "green", "black"]
+
+<h3>原型链的问题二：在创建子类型的实例时，不能向超类的构造函数中传递参数</h3>
+
+<h3>借用构造函数技术：用来解决上述的两个问题。</h3>
+思想：在子类的构造函数中，调用父类的构造函数。
+函数只是在特定环境下执行代码的对象。
+
+function superType(name) {
+	this.colors = ["red","blue"];
+	this.name = name;
+}
+superType.prototype.sayName = function(name) {
+	console.log(this.name);
+}
+function subType() {
+	//实现继承并传了参数（也可以不传，看你需要）
+	superType.call(this,"Nick");
+}
+var instance1 = new subType();
+console.log(instance1.name);
+instance1.sayName("Nick"); //error,sayName IS NOT A FUNCTION
+
+借用构造函数的问题：
+1、无法避免构造函数的问题。
+	在使用构造函数创建每个实例的时候，每个实例方法都要在每个实例上重新创建一遍。
+	ECMAScript中的函数也是对象，因此每定义一个函数，就实例化了一个对象。
+	前面person1和person2都有一个sayName方法，但是它们是不同的Function实例
+	(this.sayName = new Function("console.log(this.name);");)。
+	不同实例上的同名函数是不相等的。
+	console.log(person1.sayName == person2.sayName); //false
+	然而，创建两个完成相同任务的Function实例是没有必要的。
+	况且，有this对象在，根本就不用在方法执行前就把方法绑定到特定的对象上。
+2、在超类型的原型上定义的方法，对子类型而言也是不可见的。
+
+因此，一般很少单独使用原型链以及单独使用借用构造函数技术，而是将两者进行组合。
+
+<h3>组合继承，也叫经典继承</h3>
+思想：利用原型链来实现原型属性和方法的继承，利用借用构造函数实现实例属性和方法的继承并传递参数。
+function superType(name) {
+	//定义实例属性
+	this.name = name;
+	this.colors = ["red","blue","green"];
+}
+superType.prototype.sayName = function() {
+	console.log(this.name);
+}
+function subType(name,age) {
+	<b>superType.call(this,name);</b> //借用构造函数实现实例属性继承
+	this.age = age;
+}
+<b>subType.prototype = new superType();</b> //原型继承，实现继承原型上的属性和方法
+subType.prototype.sayAge = function() {
+	console.log(this.age);
+}
+var instance1 = new subType("Nick",25);
+console.log(instance1.name);
+console.log(instance1.age);
+instance1.colors.push("black");
+console.log(instance1.colors); //["red", "blue", "green", "black"]
+console.log(instance1.sayAge());
+console.log(instance1.sayName(instance1.name));
+
+var instance2 = new subType("Greg",26);
+console.log(instance1.colors); //["red", "blue", "green"]
+console.log(instance1.sayAge());
+console.log(instance1.sayName(instance1.name));
 </p>
 </pre>
 </p>
+</pre>
+<pre>
+<h3>原型式继承</h3>
+<p>基本思想：借助原型基于已有的对象创建新对象。</p>
+function object(o) {
+	function F() {}
+	F.prototype = o;
+	return new F();
+}
+在object函数内部，首先创建了一个临时的构造函数（以便获取prototype属性），
+然后将该构造函数的prototype属性指向已有对象o，最后又返回了函数F的实例。
+从本质上讲，object()函数对已有对象o执行了一次浅复制。（继承）
+看如下例子：
+var person = {
+	name: "Nick",
+	friends: ["Shelby","Court","Van"]
+}
+var person1 = object(person);
+console.log(person1);
+F {}
+	__proto__:
+		friends:(3) ["Shelby", "Court", "Van"]
+		name:"Nick"
+可以看到返回的是F函数的实例，里面的_proto_内部属性指向原型对象person，
+包含了person的两个属性。
 </pre>
 </body>
 </html>

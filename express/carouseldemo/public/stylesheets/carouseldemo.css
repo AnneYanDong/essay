@@ -1,0 +1,54 @@
+#carousel {
+	width: 150px;
+	height: 200px;
+	margin: 0 auto;
+	border: 1px solid grey;
+	position: relative;
+	overflow: hidden;
+}
+#images {
+	position: absolute;
+	width: 1050px;
+	height: 200px;
+	z-index: 1;
+}
+#images  img{
+	width: 150px;
+	height: 200px;
+	float: left;
+	transition: all .4s ease-in;
+}
+#buttons {
+	position: absolute;
+	left: 25px;
+	bottom: 10px;
+	z-index: 2;
+}
+#buttons span {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border: 1px solid #bc3333;
+	border-radius: 50%;
+	background: #333;
+	margin-right: 5px;
+	cursor: pointer;
+}
+#buttons .active {
+	background-color: blue;
+}
+.arrow {
+	position: absolute;
+	z-index: 2;
+	top: 30%;
+	font-size: 16px;
+}
+.arrow:hover {
+	background-color: rgba(0,0,0,.7);
+}
+#prev {
+    left: 1px;
+}
+#next {
+	right: 1px;
+}

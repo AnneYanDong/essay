@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>轮播图</title>
+	<link rel="stylesheet" type="text/css" href="../stylesheets/style.css">
+	<link rel="stylesheet" type="text/css" href="../stylesheets/carouseldemo.css">
+</head>
+<body>
+	<div id="container">
+		<!-- 轮播图模块 -->
+		<div id="carousel">
+			<div id="images" class="clearfix" style="left: 0;">
+				<!-- <img src="../images/20170705_bonus_200.png"> -->
+				<!-- 这里偏移量直接从0开始就不用添加附加图片了 -->
+				<img src="../images/20170705_bonus_30.png">
+				<img src="../images/20170705_bonus_50.png">
+				<img src="../images/20170705_bonus_80.png">
+				<img src="../images/20170705_bonus_100.png">
+				<img src="../images/20170705_bonus_200.png">
+				<!-- <img src="../images/20170705_bonus_30.png"> -->
+			</div>
+			<div id="buttons">
+				<span index="1" class="active"></span>
+				<span index="2"></span>
+				<span index="3"></span>
+				<span index="4"></span>
+				<span index="5"></span>
+			</div>
+			<a href="javascript:void(0);" id="prev" class="arrow">&lt;</a>
+			<a href="javascript:void(0);" id="next" class="arrow">&gt;</a>
+		</div>
+
+		<form name="form1">
+			<input type="file" name="file" id="fileInput">
+		</form>
+	</div>
+<script src="../javascripts/carouseldemo.js"></script>
+</body>
+</html>

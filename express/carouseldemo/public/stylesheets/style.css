@@ -1,0 +1,27 @@
+body {
+  padding: 20px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+  text-decoration: none;
+}
+/*浏览器兼容问题一：不同浏览器的标签默认的外补丁和内补丁不同*/
+*{
+	padding:0;
+	margin: 0;
+}
+li {
+	list-style-type: none;
+}
+.clearfix {
+	zoom: 1;
+}
+.clearfix:after {
+	content: '';
+	display: block;
+	clear: both;
+	height: 0;
+	visibility: hidden;
+}

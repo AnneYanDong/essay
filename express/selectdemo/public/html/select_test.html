@@ -8,7 +8,20 @@
 	<select name="businessLineIdText" id="businessLineIdText"></select>
 	<select name="ticketTypeText" id="ticketTypeText"></select>
 	<select name="name" id="name"></select>
-
-<script src="../javascripts/select_test.js"></script>
+<!-- async="true"表示这个文件需要异步加载，防止加载require.js时时间过长，
+	造成浏览器“假死”状态；IE6不支持async属性，但是支持defer,所以把defer也写上
+	加载完require.js后，就是加载我们自定义的js文件了，data-main属性的作用是：
+	制定网页的主模块程序，这个文件会第一个被require.js加载 -->
+<script src="../javascripts/require.js" data-main="../javascripts/select_test"></script>
+<script>
+	// require.config({
+	// 	shim: {
+	// 		exports: 'ajax'
+	// 	},
+	// 	paths: {
+	// 		'ajax': '../javascripts/ajax'
+	// 	}
+	// });
+</script>
 </body>
 </html>

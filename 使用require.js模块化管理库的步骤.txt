@@ -1,0 +1,114 @@
+1、先下载require.js
+2、加载我们网页的入口文件（比如select_test.js）
+	在加载require.js文件的script标签里加上data-main="js/select_test.js"属性，
+	后面select_test.js中的后缀js可以省略，即可写成data-main="js/select_test"
+3、假如select_test.js主文件有依赖其他的文件模块，则需要在主文件select_test.js中，
+	用require()函数引入所依赖的模块。如果这个文件没有用define()函数来定义，就首先要用require.config()函数定义模块的路径（path属性）
+	require.config()就写在主文件的头部。
+	require.config({
+		paths: {
+			"jquery": "jquery.min",
+			"underscore": "underscore.min",
+	　　　　"backbone": "backbone.min"
+		}
+	});
+	上面的路径默认是跟主文件在同一个目录的。如果这些模块在其他的路径，有两种写法，一种是直接写上路径；
+	另外一种是改变基目录。
+	require.config({
+		paths: {
+			"jquery": "lib/jquery.min",
+			"underscore": "lib/underscore.min",
+	　　　　"backbone": "lib/backbone.min"
+		}
+	});
+
+	require.config({
+		baseUrl: "js/lib",
+		paths: {
+			"jquery": "jquery.min",
+			"underscore": "underscore.min",
+	　　　　"backbone": "backbone.min"
+		}
+	});
+4、require.js加载的模块采用AMD规范，也就是说模块必须按照AMD规范、用define()
+	来定义后就是符合AMD规范的，就不必用require.config()来配置相关信息了。
+	具体来说，模块必须使用define()函数来定模块。比如有一个文件math.js
+	define(function() {
+		var add = function(x,y) {
+			return x+y;
+		}
+		return {
+			add: add;
+		}
+	});
+	//那么加载math.js文件就是
+	require(['math'],function(math) {
+		math.add(2,3);
+	});
+	requireJS定义了一个函数 define，它是全局变量，用来定义模块
+5、jquery是符合AMD规范的，但是underscore和backbone是不符合的，即没有使用define()来定义。
+	要用require.config()函数进行配置成符合AMD规范的库
+6、require.config()接收一个配置对象，这个对象除了前面说的paths属性之外，
+	还有一个shim属性，专门用来配置不兼容的模块（也就是不符合AMD规范的文件）
+7、比如：underscore\backbone
+	require.config({
+		shim: {
+			underscore: {
+				exports: '_'
+			},
+			backbone: {
+				deps： ['underscore','jquery'],
+				exports: 'Backbone'
+			}
+		}
+	});
+	exports值表示该模块外部调用时所用的名称；
+	deps表示该模块所依赖的其他模块。
+8、以上是require.js这个加载模块的库来完成模块化管理，最初的模块化编程就是函数。
+	function f1() {}
+	function f2() {}
+但是可能会造成命名冲突,而且模块之间没什么联系，那就用对象。
+var module = {
+	var a = 1;
+	m1: function() {
+		...
+	},
+	m2: function() {
+		...
+	}
+}
+这样会暴露所有的成员变量，而且外可以任意修改内部的变量。
+module.a = 2;
+console.log(module.a); //2
+//使用立即执行函数解决上述问题
+(function() {
+	var module = {
+		var a = 1;
+		var m1 = function() {
+			...
+		};
+		var m2 = function() {
+			...
+		};
+		return {
+			m1: m1,
+			m2: m2
+		};
+	}
+})();
+9、define() 函数
+AMD规范只定义了一个函数 define，它是全局变量。函数的描述为：
+
+define(id?, dependencies?, factory);
+id：指定义中模块的名字，可选；如果没有提供该参数，模块的名字应该默认为
+模块加载器请求的指定脚本的名字。
+如果提供了该参数，模块名必须是“顶级”的和绝对的（不允许相对名字）。
+
+依赖dependencies：是一个当前模块依赖的，已被模块定义的模块标识的数组字面量。
+依赖参数是可选的，如果忽略此参数，它应该默认为["require", "exports", "module"]。然而，如果工厂方法的长度属性小于3，加载器会选择以函数的长度属性指定的参数个数调用工厂方法。
+
+工厂方法factory，模块初始化要执行的函数或对象。
+如果为函数，它应该只被执行一次。
+如果是对象，//此对象应该为模块的输出值。//
+
+实现AMD的库有RequireJS 、curl 、Dojo 、Nodules 等。
